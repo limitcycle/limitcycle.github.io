@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta><title>Keycloak授權服務 - limitcycle&#039;s blog</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="limitcycle&#039;s blog"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="limitcycle&#039;s blog"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="上一篇詳細介紹了如何在Spring boot中集成Keycloak來進行應用程式的認證，將認證與授權從業務抽離出來，減少了代碼的撰寫，但在實際的生產環境中，僅僅進行認證服務肯定是不夠的，還需要授權功能。這一篇文章將介紹keycloak對服務所支援的授權功能"><meta property="og:type" content="blog"><meta property="og:title" content="Keycloak授權服務"><meta property="og:url" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/"><meta property="og:site_name" content="limitcycle&#039;s blog"><meta property="og:description" content="上一篇詳細介紹了如何在Spring boot中集成Keycloak來進行應用程式的認證，將認證與授權從業務抽離出來，減少了代碼的撰寫，但在實際的生產環境中，僅僅進行認證服務肯定是不夠的，還需要授權功能。這一篇文章將介紹keycloak對服務所支援的授權功能"><meta property="og:locale" content="zh_TW"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/01-authorication-arch.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/02-Resource-Management.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/03-Permission-and-Policy-Management.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/04-Policy-Enforcement.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/05-add-realm.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/06-create-user.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/07-create-role-bank-teller.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/08-create-role-account-owner.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/09-create-role-user.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/10-create-client.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/11-setting-client.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/12-client-authorization-setting.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/13-create-scope.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/14-create-resource.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/15-create-role-based-policy-1.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/16-create-role-based-policy-1.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/17-create-resource-base-permission.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/18-Evaluating-the-Resource-Based-permission.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/19-Evaluating-the-Resource-Based-permission-result-1.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/20-Evaluating-the-Resource-Based-permission-2.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/21-Evaluating-the-Resource-Based-permission-result-2.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/22-create-scope-based.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/23-Evaluatioin-new-change-1.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/24-Evaluation-new-change-result-1.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/25-Evaluation-new-changet-2.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/26-Evaluation-new-change-result-2.png"><meta property="og:image" content="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/27-Evaluation-new-change-result-3.png"><meta property="article:published_time" content="2021-01-11T03:33:43.000Z"><meta property="article:modified_time" content="2021-01-17T20:25:51.148Z"><meta property="article:author" content="limitcycle"><meta property="article:tag" content="keycloak"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="01-authorication-arch.png"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/"},"headline":"limitcycle's blog","image":["https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/01-authorication-arch.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/02-Resource-Management.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/03-Permission-and-Policy-Management.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/04-Policy-Enforcement.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/05-add-realm.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/06-create-user.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/07-create-role-bank-teller.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/08-create-role-account-owner.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/09-create-role-user.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/10-create-client.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/11-setting-client.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/12-client-authorization-setting.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/13-create-scope.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/14-create-resource.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/15-create-role-based-policy-1.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/16-create-role-based-policy-1.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/17-create-resource-base-permission.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/18-Evaluating-the-Resource-Based-permission.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/19-Evaluating-the-Resource-Based-permission-result-1.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/20-Evaluating-the-Resource-Based-permission-2.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/21-Evaluating-the-Resource-Based-permission-result-2.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/22-create-scope-based.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/23-Evaluatioin-new-change-1.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/24-Evaluation-new-change-result-1.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/25-Evaluation-new-changet-2.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/26-Evaluation-new-change-result-2.png","https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/27-Evaluation-new-change-result-3.png"],"datePublished":"2021-01-11T03:33:43.000Z","dateModified":"2021-01-17T20:25:51.148Z","author":{"@type":"Person","name":"limitcycle"},"description":"上一篇詳細介紹了如何在Spring boot中集成Keycloak來進行應用程式的認證，將認證與授權從業務抽離出來，減少了代碼的撰寫，但在實際的生產環境中，僅僅進行認證服務肯定是不夠的，還需要授權功能。這一篇文章將介紹keycloak對服務所支援的授權功能"}</script><link rel="canonical" href="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/"><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.0/css/all.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><!--!--><meta name="generator" content="Hexo 5.3.0"></head><body class="is-2-column"><nav class="navbar navbar-main"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/">limitcycle&#039;s blog</a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">Home</a><a class="navbar-item" href="/archives">Archives</a><a class="navbar-item" href="/categories">Categories</a><a class="navbar-item" href="/tags">Tags</a><a class="navbar-item" href="/about">About</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/limitcycle/"><i class="fab fa-github"></i></a><a class="navbar-item is-hidden-tablet catalogue" title="文章目錄" href="javascript:;"><i class="fas fa-list-ul"></i></a><a class="navbar-item search" title="搜尋" href="javascript:;"><i class="fas fa-search"></i></a></div></div></div></nav><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-8-widescreen"><div class="card"><article class="card-content article" role="article"><div class="article-meta is-size-7 is-uppercase level is-mobile"><div class="level-left"><span class="level-item"><time dateTime="2021-01-11T03:33:43.000Z" title="1/11/2021, 3:33:43 AM">2021-01-11</time>發表</span><span class="level-item"><time dateTime="2021-01-17T20:25:51.148Z" title="1/17/2021, 8:25:51 PM">2021-01-18</time>更新</span><span class="level-item">25 分鐘讀完 (大約3806個字)</span></div></div><h1 class="title is-3 is-size-4-mobile">Keycloak授權服務</h1><div class="content"><p>上一篇詳細介紹了如何在Spring boot中集成Keycloak來進行應用程式的認證，將認證與授權從業務抽離出來，減少了代碼的撰寫，但在實際的生產環境中，僅僅進行認證服務肯定是不夠的，還需要授權功能。這一篇文章將介紹keycloak對服務所支援的授權功能</p>
+<a id="more"></a>
+
+<h2 id="keycloak所支援的授權策略"><a href="#keycloak所支援的授權策略" class="headerlink" title="keycloak所支援的授權策略"></a>keycloak所支援的授權策略</h2><p>Keycloak支持細粒度的授權策略(authorization policies)，並可以對這些策略進一步組合，例如：</p>
+<ul>
+<li><strong>Attribute-based access control (ABAC)</strong>: 基於屬性的安全控制</li>
+<li><strong>Role-based access control (RBAC)</strong>: 基於角色的安全控制</li>
+<li><strong>User-based access control (UBAC)</strong>: 基於用戶的安全控制</li>
+<li><strong>Context-based access control (CBAC)</strong>: 基於上下文的安全控制</li>
+<li><strong>Rule-based access control</strong>: 基於規則的安全控制<ul>
+<li>Using JavaScript</li>
+</ul>
+</li>
+<li><strong>Time-based access control</strong>: 基于時間的安全控制</li>
+<li><strong>Support for custom access control mechanisms (ACMs) through a Policy Provider Service Provider Interface (SPI)</strong>: 通過SPI自定義訪問控制策略(ACMs)</li>
+</ul>
+<p>Keycloak提供了創建受保護資源和範圍權限的必要方法，將這些權限(permissions)與授權策略(authorization policies)相關聯，並在應用程序和服務中實施授權決策。</p>
+<ul>
+<li><p>對於基於<code>RESTful的資源服務器</code>，該信息通常是從安全令牌中獲得的，通常是在每次向服務器請求時作為承載令牌發送的。</p>
+</li>
+<li><p>對於<code>依賴會話來認證用戶的Web應用程序</code>，該信息通常存儲在用戶會話中，並針對每個請求從該會話中檢索。</p>
+</li>
+</ul>
+<p>資源服務器通常執行的是基於<code>角色的訪問控制(RBAC)策略</code>，即檢查用戶所擁有的角色是否關聯了要訪問的資源。雖然這種方式非常有用，但是它們也有一些限制：</p>
+<ul>
+<li>資源和角色緊密耦合，角色的更改（如添加、刪除或更改訪問上下文）可能影響多個資源。</li>
+<li>基於RBAC的應用程序無法很好地響應安全性需求的調整。</li>
+<li>項目規模擴大時，覆雜的角色管理會很困難而且容易出錯。</li>
+<li>不夠靈活。角色並不能有效代表用戶身份，即缺乏上下文信息。客觀上來說被授予了角色的用戶，至少會擁有某些訪問權限。</li>
+</ul>
+<p>時至今日，我們需要考慮異構環境，即用戶分佈在不同區域，使用不同的本地策略，使用不同的設備以及對信息共享的需求很高，Keycloak授權服務可以幫助您提高應用程序和服務的授權能力通過提供：</p>
+<ul>
+<li>不同的訪問控制機制以及細粒度的授權策略。</li>
+<li>集中式的資源、權限以及策略管理。</li>
+<li>集中式的策略決策。</li>
+<li>REST風格的授權服務。</li>
+<li>授權工作流程和用戶訪問管理。</li>
+<li>可作為快速響應您項目中安全需求的基礎設施。</li>
+</ul>
+<h2 id="Keycloak授權架構"><a href="#Keycloak授權架構" class="headerlink" title="Keycloak授權架構"></a>Keycloak授權架構</h2><p>從設計的角度來看，授權服務基於一組定義良好的授權模式，它們提供以下功能:<br><img src="01-authorication-arch.png"></p>
+<ul>
+<li><strong>策略管理點(PAP)</strong><br>提供基於Keycloak管理控制台的一組UI，以管理資源服務器，資源，範圍，權限和策略。通過使用<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/index.html#_service_protection_api">Protection API</a>可以部分完成此操作</li>
+<li><strong>政策決策點(PDP)</strong><br>提供一個可分配的策略決策點，指向授權請求發送到的位置，並根據請求的權限對策略進行相應的評估。有關更多信息，請參見<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/index.html#_service_obtaining_permissions">Obtaining Permissions</a>。  </li>
+<li><strong>政策執行點(PEP)</strong><br>提供針對不同環境的實現，以在資源服務器端實際執行授權決策。Keycloak提供了一些內置的<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/index.html#_enforcer_overview">Policy Enforcer</a>。  </li>
+<li><strong>政策信息點(PIP)</strong><br>基於Keycloak Authentication Server，您可以在評估授權策略時從身份和運行時環境中獲取屬性。</li>
+</ul>
+<h2 id="Keycloak授權流程"><a href="#Keycloak授權流程" class="headerlink" title="Keycloak授權流程"></a>Keycloak授權流程</h2><p>主要步驟為三個流程，以了解如何使用Keycloak為應用程序啟用細粒度授權:</p>
+<ul>
+<li><strong>資源管理(Resource Management)</strong></li>
+<li><strong>權限和政策管理(Permission and Policy Management)</strong></li>
+<li><strong>政策執行(Policy Enforcement)</strong></li>
+</ul>
+<h3 id="資源管理-Resource-Management"><a href="#資源管理-Resource-Management" class="headerlink" title="資源管理(Resource Management)"></a>資源管理(Resource Management)</h3><p>首先需要指定Keycloak希望保護的內容，通常代表Web應用程序或一組一個或多個服務。使用Keycloak管理控制台管理資源服務器。在那裡，可以啟用任何已注冊的客戶端應用程序作為資源服務器，並開始管理要保護的資源和範圍。</p>
+<p><img src="02-Resource-Management.png"></p>
+<p>資源可以是網頁，RESTFul資源，文件系統中的文件，EJB等。它們可以表示一組資源(就像Java中的class一樣)，也可以表示單個特定資源。</p>
+<p>例如某個用戶能訪問或控制某個區域的設備，區域和設備等都可以看作是資源。範圍(scope)通常表示可以對資源執行的操作，但它們不限於此。還可以使用範圍來表示資源中的一個或多個屬性。</p>
+<h3 id="權限和政策管理-Permission-and-Policy-Management"><a href="#權限和政策管理-Permission-and-Policy-Management" class="headerlink" title="權限和政策管理(Permission and Policy Management)"></a>權限和政策管理(Permission and Policy Management)</h3><p>定義資源服務器和要保護的所有資源後，必須設置權限(permissions)和政策(policies)。**(重要)**</p>
+<p>此過程涉及實際定義管理資源的安全性和訪問要求的所有必要步驟。政策定義了訪問或執行某些操作(資源或範圍)必須滿足的條件，此部份是通用的，可以重用來構建權限甚至更覆雜的策略。</p>
+<p>Keycloak提供了一些內建的政策，比如基於Role的，基於Group的，或者基於User的政策，涵蓋了最常見的訪問控制機制。您甚至可以根據使用JavaScript編寫的規則創建政策。</p>
+<p><img src="03-Permission-and-Policy-Management.png"></p>
+<p>定義政策後，即可開始定義權限，權限又與要保護的資源相結合。此處指定要保護的內容(資源或範圍)以及授予或拒絕權限必須滿足的政策。</p>
+<p>後面會有詳細的例子介紹如何創建使用。</p>
+<h3 id="政策執行-Policy-Enforcement"><a href="#政策執行-Policy-Enforcement" class="headerlink" title="政策執行(Policy Enforcement)"></a>政策執行(Policy Enforcement)</h3><p><strong>政策實施</strong>涉及必要的步驟，以實際對資源服務器實施授權決策。</p>
+<p>這是通過在資源服務器上啟用能夠與授權服務器進行通信，請求授權數據並基於服務器返回的決策和權限來控制對受保護資源的訪問的政策服務器或PEP來實現的。</p>
+<p><img src="04-Policy-Enforcement.png"></p>
+<p>Keycloak提供了一些內置的<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/index.html#_enforcer_overview">Policy Enforcer</a>實施，具體取決其運行的平台。</p>
+<h2 id="keycloak授權服務"><a href="#keycloak授權服務" class="headerlink" title="keycloak授權服務"></a>keycloak授權服務</h2><p>keycloak授權服務由以下RESTFul端點組成:</p>
+<ul>
+<li><strong>令牌端點(Token Endpoint)</strong></li>
+<li><strong>資源管理端點(Resource Management Endpoint)</strong></li>
+<li><strong>權限管理端點(Permission Management Endpoint)</strong></li>
+</ul>
+<p>每個服務都提供一個特定的API，涵蓋授權過程中涉及的不同步驟。</p>
+<h3 id="令牌端點-Token-Endpoint"><a href="#令牌端點-Token-Endpoint" class="headerlink" title="令牌端點(Token Endpoint)"></a>令牌端點(Token Endpoint)</h3><blockquote>
+<p>一般熟知的Oauth流程</p>
+</blockquote>
+<p>OAuth2客戶端(例如前端應用程序)可以使用令牌端點從服務器獲取訪問令牌，並使用這些相同的令牌來訪問受資源服務器保護的資源(例如後端服務)。</p>
+<p>以相同的方式，Keycloak授權服務提供OAuth2的擴展，以允許基於與所請求的資源或範圍相關聯的所有策略的處理來發出訪問令牌。</p>
+<p>這意味著資源服務器可以基於服務器授予的訪問令牌所擁有的權限來強制對其受保護資源的訪問。在Keycloak授權服務中，具有權限的訪問令牌稱為請求方令牌(Requesting Party Token)。</p>
+<h3 id="Protection-API"><a href="#Protection-API" class="headerlink" title="Protection API"></a>Protection API</h3><p>Protection API是一組符<a target="_blank" rel="noopener" href="https://docs.kantarainitiative.org/uma/wg/oauth-uma-federated-authz-2.0-09.html">UMA</a>的端點，為資源服務器提供操作，以幫助他們管理與之關聯的資源，範圍，權限和策略。只允許資源服務器訪問此API，這也需要uma_protection範圍。</p>
+<p>Protection API提供的操作可以分為兩大類：</p>
+<ol>
+<li><strong>資源管理(Resource Management)</strong><ul>
+<li>創建資源(Create Resource)</li>
+<li>刪除資源(Delete Resource)</li>
+<li>按ID查找(Find by Id)</li>
+<li>詢問(Query)</li>
+</ul>
+</li>
+<li><strong>權限管理端點(Permission Management)</strong><ul>
+<li>發行許可票(Issue Permission Tickets)</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>默認情況下，遠程資源管理為啟用狀態。您可以使用Keycloak管理控制台進行更改，並且僅允許通過控制台進行資源管理。 </p>
+</blockquote>
+<h2 id="實例演練"><a href="#實例演練" class="headerlink" title="實例演練"></a>實例演練</h2><p>以下是我們要設置的方案:</p>
+<ol>
+<li>新建一個Realm: <code>authorization-demo</code></li>
+<li>在此Realm下，新建一個Client: <code>bank-client</code></li>
+<li>定義一個<code>/account/&#123;id&#125;</code>為該Client下的一個Resource</li>
+<li>在<code>/account/&#123;id&#125;</code>這個Resource下，有此 <code>account::view</code> Scope</li>
+<li>建立一個User: <code>bob</code></li>
+<li>建立三個角色: <code>bank_teller</code>、<code>account_owner</code>和<code>user</code></li>
+<li>我們將設置以下兩個<strong>Role-base</strong> policies:<ul>
+<li><code>bank_teller</code>跟<code>account_owner</code>有權訪問<code>/account/&#123;id&#125;</code> Resource</li>
+<li><code>account_owner</code>有權使用<code>account:view</code>Scope</li>
+<li><code>user</code> 無權訪問任何Resource或Scope</li>
+</ul>
+</li>
+<li>使用keycloak內建的<code>Evaluate</code>工具來測試授予或拒絕訪問權限。</li>
+</ol>
+<h3 id="配置Keycloak"><a href="#配置Keycloak" class="headerlink" title="配置Keycloak"></a>配置Keycloak</h3><p>基本配置內容可參閱上篇文章</p>
+<h3 id="建立Realm"><a href="#建立Realm" class="headerlink" title="建立Realm"></a>建立Realm</h3><ol>
+<li>將鼠標停在左上<code>master</code>，然後單擊<code>Add Realm</code>按鈕。</li>
+<li>輸入<code>authorization-demo</code>作為名稱。</li>
+<li>點擊Create。</li>
+<li>確認左上角Realm在authorization-demo而不是master領域。</li>
+</ol>
+<p><img src="05-add-realm.png"></p>
+<h3 id="建立User"><a href="#建立User" class="headerlink" title="建立User"></a>建立User</h3><ol>
+<li>點擊左側的<code>Users</code>選單</li>
+<li>點擊<code>Add User</code>按鈕</li>
+<li>輸入<code>username</code>(例如<code>bob</code>)</li>
+<li>確保<code>User Enabled</code>為開啟狀態</li>
+<li>請點擊 <code>Save</code></li>
+</ol>
+<p><img src="06-create-user.png"></p>
+<h3 id="建立Roles"><a href="#建立Roles" class="headerlink" title="建立Roles"></a>建立Roles</h3><ol>
+<li>點擊左側的<code>Roles</code>選單</li>
+<li>點擊<code>Add Role</code></li>
+<li>添加下列角色：<code>bank_teller</code>，<code>account_owner</code>和<code>user</code></li>
+</ol>
+<p><img src="07-create-role-bank-teller.png"></p>
+<p><img src="08-create-role-account-owner.png"></p>
+<p><img src="09-create-role-user.png"></p>
+<h3 id="建立Client"><a href="#建立Client" class="headerlink" title="建立Client"></a>建立Client</h3><ol>
+<li>點擊左側的<code>Clients</code>選單</li>
+<li>點擊 <code>Create</code></li>
+<li><code>Client ID</code>欄位輸入<code>bank-api</code></li>
+<li><code>Root URL</code>欄位輸入<code>http://127.0.0.1:8000/bank-api</code></li>
+<li>點擊<code>Save</code></li>
+<li>確保<code>Client Protocol</code>是<code>openid-connect</code></li>
+<li>更改<code>Access Type</code>為<code>confidential</code></li>
+<li>更改<code>Authorization Enabled</code>為<code>On</code></li>
+<li>向下滾動並點擊<code>Save</code>。<code>Authorization</code>應會顯示在上方</li>
+<li>點擊<code>Authorization</code>選項，然後再點擊<code>Settings</code></li>
+<li>確保將<code>Decision Strategy</code>設置為<code>Unanimous</code><ul>
+<li>這是 Resource server 的 Decision Strategy (決策策略)</li>
+</ul>
+</li>
+</ol>
+<p><img src="10-create-client.png"></p>
+<p><img src="11-setting-client.png"></p>
+<p><img src="12-client-authorization-setting.png"></p>
+<p><strong>(補充) Decision Strategy</strong></p>
+<blockquote>
+<p>This configurations changes how the policy evaluation engine decides whether or not a resource or scope should be granted based on the outcome from all evaluated permissions. Affirmative means that at least one permission must evaluate to a positive decision in order grant access to a resource and its scopes. Unanimous means that all permissions must evaluate to a positive decision in order for the final decision to be also positive. As an example, if two permissions for a same resource or scope are in conflict (one of them is granting access and the other is denying access), the permission to the resource or scope will be granted if the choosen strategy is Affirmative. Otherwise, a single deny from any permission will also deny access to the resource or scope.</p>
+</blockquote>
+<h3 id="建立自定義Scope"><a href="#建立自定義Scope" class="headerlink" title="建立自定義Scope"></a>建立自定義Scope</h3><ol>
+<li>點擊<code>Authorization</code>標籤</li>
+<li>點擊<code>Authorization Scopes</code> &rarr; <code>Create</code>彈出<code>Add Scope</code>頁面</li>
+<li>輸入<code>account:view</code>名稱，然後按Save。</li>
+</ol>
+<p><img src="13-create-scope.png"></p>
+<h3 id="建立自定義Resouce"><a href="#建立自定義Resouce" class="headerlink" title="建立自定義Resouce"></a>建立自定義Resouce</h3><ol>
+<li>點擊<code>Authorization</code>標籤</li>
+<li>點擊 <code>Resources</code></li>
+<li>點擊 <code>Create</code></li>
+<li><code>Name</code>和<code>Display name</code>輸入<code>View Account Resource</code></li>
+<li><code>URI</code>輸入<code>/account/&#123;id&#125;</code></li>
+<li>在<code>Scopes</code>輸入<code>account:view</code></li>
+<li>點擊<code>Save</code></li>
+</ol>
+<p><img src="14-create-resource.png"></p>
+<p>更多內容可參閱<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/#_resource_create">Create Resources</a></p>
+<h3 id="建立Policies-重要"><a href="#建立Policies-重要" class="headerlink" title="建立Policies(重要)"></a>建立Policies(重要)</h3><h4 id="Create-Only-Bank-Teller-and-Account-Owner-Policy"><a href="#Create-Only-Bank-Teller-and-Account-Owner-Policy" class="headerlink" title="Create Only Bank Teller and Account Owner Policy"></a>Create Only Bank Teller and Account Owner Policy</h4><ol>
+<li>在<code>Authorization</code>標籤下，點擊<code>Policies</code></li>
+<li>從<code>Create Policy</code>下拉選單中選擇<code>Role</code></li>
+<li>在<code>Name</code>輸入<code>Only Bank Teller and Account Owner Policy</code></li>
+<li>在<code>Realm Roles</code>選擇<code>bank_teller</code>和<code>account_owner</code>角色並加入</li>
+<li>確保<code>Logic</code>設置為<code>Positive</code></li>
+<li>請點擊 <code>Save</code></li>
+</ol>
+<p><img src="15-create-role-based-policy-1.png"></p>
+<h4 id="Create-Only-Account-Owner-Policy"><a href="#Create-Only-Account-Owner-Policy" class="headerlink" title="Create Only Account Owner Policy"></a>Create Only Account Owner Policy</h4><ol>
+<li>再次點擊<code>Policies</code></li>
+<li>再次從<code>Create Policy</code>下拉選單中選擇<code>Role</code></li>
+<li>這次在<code>Name</code>輸入<code>Only Account Owner Policy</code></li>
+<li>這次在<code>Realm Roles</code>下選擇<code>account_owner</code></li>
+<li>確保<code>Logic</code>設置為<code>Positive</code></li>
+<li>請點擊 <code>Save</code></li>
+</ol>
+<p><img src="16-create-role-based-policy-1.png"></p>
+<p>更多內容請參閱<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/#_policy_rbac">Role-Based Policy</a></p>
+<p>其他Policy可參閱<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/#_policy_overview">Managing Policies</a></p>
+<h3 id="建立-Resource-Based-Permission"><a href="#建立-Resource-Based-Permission" class="headerlink" title="建立 Resource-Based Permission"></a>建立 Resource-Based Permission</h3><ol>
+<li>再次在<code>Authorization</code>標籤下，點擊<code>Permissions</code></li>
+<li>選擇 <code>Resource-Based</code></li>
+<li><code>Name</code>欄位輸入<code>View Account Resource Permission</code></li>
+<li><code>Resources</code>欄位輸入<code>View Account Resource</code></li>
+<li><code>Apply Policy</code>下<code>Only Bank Teller and Account Owner Policy</code></li>
+<li>確保<code>Decision Strategy</code>設置為<code>Unanimous</code></li>
+<li>點擊<code>Save</code></li>
+</ol>
+<p><img src="17-create-resource-base-permission.png"></p>
+<h3 id="Evaluating-the-Resource-Based-permission"><a href="#Evaluating-the-Resource-Based-permission" class="headerlink" title="Evaluating the Resource-Based permission"></a>Evaluating the Resource-Based permission</h3><ol>
+<li>再次在<code>Authorization</code>標籤下，選擇<code>Evaluate</code></li>
+<li>在<code>User</code>輸入<code>bob</code></li>
+<li>在<code>Roles</code>選擇<code>user</code><ul>
+<li> 我們在這將User與我們創建的Role做關聯。</li>
+</ul>
+</li>
+<li>在<code>Resources</code>下選擇<code>View Account Resource</code>，然後點擊<code>Add</code></li>
+<li>點擊<code>Evaluate</code></li>
+</ol>
+<p><img src="18-Evaluating-the-Resource-Based-permission.png"></p>
+<ol start="6">
+<li>展開<code>View Account Resource with scopes [account:view]</code>以查看結果，應該看到<code>DENY</code>。</li>
+</ol>
+<p><img src="19-Evaluating-the-Resource-Based-permission-result-1.png"></p>
+<ol start="7">
+<li>此部份的驗證是對的，因為在上方我們建立的一個只允許兩個角色訪問該Resource: <code>Only Bank Teller and Account Owner Policy</code>Policy</li>
+<li>點擊<code>Back</code>回到<code>Evaluate</code>頁面</li>
+<li>將<code>bob</code>的角色更改為<code>account_owner</code>，然後點擊<code>Evaluate</code>。現在，應該看到結果為<code>PERMIT</code>。將角色更改為<code>bank_teller</code>，也是同樣結果。</li>
+</ol>
+<p><img src="20-Evaluating-the-Resource-Based-permission-2.png"></p>
+<p><img src="21-Evaluating-the-Resource-Based-permission-result-2.png"></p>
+<p>更多內容請參閱<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/#_policy_evaluation_overview">Evaluating and Testing Policies</a></p>
+<h3 id="建立-Scope-Based-Permission"><a href="#建立-Scope-Based-Permission" class="headerlink" title="建立 Scope-Based Permission"></a>建立 Scope-Based Permission</h3><ol>
+<li>返回<code>Permissions</code>標籤</li>
+<li>在<code>Create Permission</code>下拉選單中選擇<code>Scope-Based</code></li>
+<li><code>Name</code>輸入<code>View Account Scope Permission</code></li>
+<li><code>Scopes</code>輸入<code>account:view</code></li>
+<li><code>Apply Policy</code>輸入<code>Only Account Owner Policy</code></li>
+<li>確保<code>Decision Strategy</code>設置為<code>Unanimous</code></li>
+<li>點擊<code>Save</code></li>
+</ol>
+<p><img src="22-create-scope-based.png"></p>
+<p>更多內容請參閱<a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/index.html#_permission_create_scope">Creating Scope-Based Permissions</a></p>
+<h3 id="Evaluating-the-Scope-Based-permission"><a href="#Evaluating-the-Scope-Based-permission" class="headerlink" title="Evaluating the Scope-Based permission"></a>Evaluating the Scope-Based permission</h3><ol>
+<li>再次點擊<code>Evaluate</code>標籤</li>
+<li>在<code>User</code>輸入<code>bob</code></li>
+<li>在<code>Roles</code>選擇<code>bank_teller</code></li>
+<li>在<code>Resources</code>下選擇<code>View Account Resource</code>，然後點擊<code>Add</code></li>
+<li>點擊<code>Evaluate</code>，得到<code>DENY</code><ul>
+<li>因為設置了<code>bank_teller</code>只可以訪問<code>resource</code>但不能訪問<code>scope</code> </li>
+<li>且Resource server的<code>Decision Strategy</code>設置為<code>Unanimous</code>，最後的決定是<code>DENY</code>。(訪問resource評估為true，但訪問scope評估為false，所以得到<code>DENY</code>)</li>
+</ul>
+</li>
+</ol>
+<p><img src="23-Evaluatioin-new-change-1.png"></p>
+<p><img src="24-Evaluation-new-change-result-1.png"></p>
+<ol start="6">
+<li>回到<code>Authorization</code>下的<code>Settings</code>，然後將更<code>Decision Strategy</code>改為<code>Affirmative</code>，然後再次返回到步驟1-5。這次最終結果應該是<code>PERMIT</code>（其中一個權限為true，所以最終結果為true）。</li>
+</ol>
+<p><img src="25-Evaluation-new-changet-2.png"></p>
+<p><img src="26-Evaluation-new-change-result-2.png"></p>
+<ol start="7">
+<li>為了完整起見，將resource server的<code>Decision Strategy</code>重新設置為<code>Unanimous</code>。重新實施步驟1至5，但這一次將角色設置為<code>account_owner</code>。鑑於<code>account_owner</code>可以同時訪問<code>resource</code>和<code>scope</code>，所以這次的結果<code>PERMIT</code>。</li>
+</ol>
+<p><img src="27-Evaluation-new-change-result-3.png"></p>
+<h2 id="結論"><a href="#結論" class="headerlink" title="結論"></a>結論</h2><p>說明authorization policies原理，以及透過實例來建制流程</p>
+<ol>
+<li>先定義好scope</li>
+<li>再建立resource，再把resource跟scope建立關聯</li>
+<li>再建立policy(Role-Based、User-Based…)把resource與此policy關聯起來</li>
+<li>再建立Resource-Based Permission or Scope-Based Permission。把 Policy與resource or scope關聯起來</li>
+</ol>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ul>
+<li><p><a target="_blank" rel="noopener" href="https://www.keycloak.org/docs/latest/authorization_services/index.html">https://www.keycloak.org/docs/latest/authorization_services/index.html</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/42186537/resources-scopes-permissions-and-policies-in-keycloak">https://stackoverflow.com/questions/42186537/resources-scopes-permissions-and-policies-in-keycloak</a></p>
+</li>
+</ul>
+</div><div class="article-licensing box"><div class="licensing-title"><p>Keycloak授權服務</p><p><a href="https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/">https://limitcycle.github.io/2021/01/11/keycloak-authorization-services/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><p>limitcycle</p></div></div><div class="level-item is-narrow"><div><h6>發表於</h6><p>2021-01-11</p></div></div><div class="level-item is-narrow"><div><h6>更新於</h6><p>2021-01-18</p></div></div><div class="level-item is-narrow"><div><h6>許可協議</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="article-tags is-size-7 mb-4"><span class="mr-2">#</span><a class="link-muted mr-2" rel="tag" href="/tags/keycloak/">keycloak</a></div><!--!--></article></div><!--!--><nav class="post-navigation mt-4 level is-mobile"><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2021/01/09/spring-boot-with-keycloak/"><span class="level-item">使用Keycloak保護Spring Boot REST服務</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><!--!--></div><div class="column column-left is-4-tablet is-4-desktop is-4-widescreen  order-1 is-sticky"><div class="card widget" id="toc" data-type="toc"><div class="card-content"><div class="menu"><h3 class="menu-label">文章目錄</h3><ul class="menu-list"><li><a class="level is-mobile" href="#keycloak所支援的授權策略"><span class="level-left"><span class="level-item">1</span><span class="level-item">keycloak所支援的授權策略</span></span></a></li><li><a class="level is-mobile" href="#Keycloak授權架構"><span class="level-left"><span class="level-item">2</span><span class="level-item">Keycloak授權架構</span></span></a></li><li><a class="level is-mobile" href="#Keycloak授權流程"><span class="level-left"><span class="level-item">3</span><span class="level-item">Keycloak授權流程</span></span></a><ul class="menu-list"><li><a class="level is-mobile" href="#資源管理-Resource-Management"><span class="level-left"><span class="level-item">3.1</span><span class="level-item">資源管理(Resource Management)</span></span></a></li><li><a class="level is-mobile" href="#權限和政策管理-Permission-and-Policy-Management"><span class="level-left"><span class="level-item">3.2</span><span class="level-item">權限和政策管理(Permission and Policy Management)</span></span></a></li><li><a class="level is-mobile" href="#政策執行-Policy-Enforcement"><span class="level-left"><span class="level-item">3.3</span><span class="level-item">政策執行(Policy Enforcement)</span></span></a></li></ul></li><li><a class="level is-mobile" href="#keycloak授權服務"><span class="level-left"><span class="level-item">4</span><span class="level-item">keycloak授權服務</span></span></a><ul class="menu-list"><li><a class="level is-mobile" href="#令牌端點-Token-Endpoint"><span class="level-left"><span class="level-item">4.1</span><span class="level-item">令牌端點(Token Endpoint)</span></span></a></li><li><a class="level is-mobile" href="#Protection-API"><span class="level-left"><span class="level-item">4.2</span><span class="level-item">Protection API</span></span></a></li></ul></li><li><a class="level is-mobile" href="#實例演練"><span class="level-left"><span class="level-item">5</span><span class="level-item">實例演練</span></span></a><ul class="menu-list"><li><a class="level is-mobile" href="#配置Keycloak"><span class="level-left"><span class="level-item">5.1</span><span class="level-item">配置Keycloak</span></span></a></li><li><a class="level is-mobile" href="#建立Realm"><span class="level-left"><span class="level-item">5.2</span><span class="level-item">建立Realm</span></span></a></li><li><a class="level is-mobile" href="#建立User"><span class="level-left"><span class="level-item">5.3</span><span class="level-item">建立User</span></span></a></li><li><a class="level is-mobile" href="#建立Roles"><span class="level-left"><span class="level-item">5.4</span><span class="level-item">建立Roles</span></span></a></li><li><a class="level is-mobile" href="#建立Client"><span class="level-left"><span class="level-item">5.5</span><span class="level-item">建立Client</span></span></a></li><li><a class="level is-mobile" href="#建立自定義Scope"><span class="level-left"><span class="level-item">5.6</span><span class="level-item">建立自定義Scope</span></span></a></li><li><a class="level is-mobile" href="#建立自定義Resouce"><span class="level-left"><span class="level-item">5.7</span><span class="level-item">建立自定義Resouce</span></span></a></li><li><a class="level is-mobile" href="#建立Policies-重要"><span class="level-left"><span class="level-item">5.8</span><span class="level-item">建立Policies(重要)</span></span></a><ul class="menu-list"><li><a class="level is-mobile" href="#Create-Only-Bank-Teller-and-Account-Owner-Policy"><span class="level-left"><span class="level-item">5.8.1</span><span class="level-item">Create Only Bank Teller and Account Owner Policy</span></span></a></li><li><a class="level is-mobile" href="#Create-Only-Account-Owner-Policy"><span class="level-left"><span class="level-item">5.8.2</span><span class="level-item">Create Only Account Owner Policy</span></span></a></li></ul></li><li><a class="level is-mobile" href="#建立-Resource-Based-Permission"><span class="level-left"><span class="level-item">5.9</span><span class="level-item">建立 Resource-Based Permission</span></span></a></li><li><a class="level is-mobile" href="#Evaluating-the-Resource-Based-permission"><span class="level-left"><span class="level-item">5.10</span><span class="level-item">Evaluating the Resource-Based permission</span></span></a></li><li><a class="level is-mobile" href="#建立-Scope-Based-Permission"><span class="level-left"><span class="level-item">5.11</span><span class="level-item">建立 Scope-Based Permission</span></span></a></li><li><a class="level is-mobile" href="#Evaluating-the-Scope-Based-permission"><span class="level-left"><span class="level-item">5.12</span><span class="level-item">Evaluating the Scope-Based permission</span></span></a></li></ul></li><li><a class="level is-mobile" href="#結論"><span class="level-left"><span class="level-item">6</span><span class="level-item">結論</span></span></a></li><li><a class="level is-mobile" href="#參考資料"><span class="level-left"><span class="level-item">7</span><span class="level-item">參考資料</span></span></a></li></ul></div></div><style>#toc .menu-list > li > a.is-active + .menu-list { display: block; }#toc .menu-list > li > a + .menu-list { display: none; }</style><script src="/js/toc.js" defer></script></div><div class="card widget" data-type="recent-posts"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2021-01-11T03:33:43.000Z">2021-01-11</time></p><p class="title"><a href="/2021/01/11/keycloak-authorization-services/">Keycloak授權服務</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2021-01-09T08:33:29.000Z">2021-01-09</time></p><p class="title"><a href="/2021/01/09/spring-boot-with-keycloak/">使用Keycloak保護Spring Boot REST服務</a></p></div></article></div></div><div class="card widget" data-type="tags"><div class="card-content"><div class="menu"><h3 class="menu-label">標籤</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/keycloak/"><span class="tag">keycloak</span><span class="tag">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/spring/"><span class="tag">spring</span><span class="tag">1</span></a></div></div></div></div></div></div><!--!--></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/">limitcycle&#039;s blog</a><p class="is-size-7"><span>&copy; 2021 limitcycle</span>  Powered by <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a> &amp; <a href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank" rel="noopener">Icarus</a></p></div><div class="level-end"><div class="field has-addons"><p class="control"><a class="button is-transparent is-large" target="_blank" rel="noopener" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a></p><p class="control"><a class="button is-transparent is-large" target="_blank" rel="noopener" title="Attribution 4.0 International" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a></p><p class="control"><a class="button is-transparent is-large" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/ppoffice/hexo-theme-icarus"><i class="fab fa-github"></i></a></p></div></div></div></div></footer><script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script><script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script><script>moment.locale("zh-TW");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><a id="back-to-top" title="回到頁首" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><script src="/js/main.js" defer></script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="請輸入關鍵字..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"請輸入關鍵字...","untitled":"(無標題)","posts":"文章","pages":"頁面","categories":"分類","tags":"標籤"});
+        });</script></body></html>
